@@ -70,33 +70,37 @@ aviation-accident-predictor/
 | --- | --- | --- |
 | `/` | Home | Hero section with aviation image, risk classes, how-it-works and Start Prediction button. |
 | `/about` | About | What is aviation accident prediction, what is QDA, why QDA, objectives and workflow diagram. |
-| `/prediction` | Prediction | Full input form (reference fields + optional airport + aircraft type + 14 features) with manually entered weather. |
+| `/prediction` | Prediction | Full input form (reference dropdowns + optional airport + aircraft type + 18 features) with manually entered weather. |
 | `/predict` (POST) | Result | Colour-coded risk card, probability, confidence, recommendations and top risk contributors. |
 | `/dashboard` | Dashboard | Model accuracy, confusion matrix, class distribution and dataset statistics. |
 | `/contact` | Contact | Project guide, team members and college details. |
 
 ## Model Features
 
-The QDA model is trained on these 14 features:
+The QDA model is trained on these 18 features:
 
 1. Aircraft Age (years)
 2. Engine Health (%)
 3. Altitude (ft)
-4. Airspeed (km/h)
-5. Fuel Level (%)
-6. Flight Duration (hours)
-7. Turbulence Level (0–10)
-8. Visibility (km)
-9. Temperature (°C)
-10. Humidity (%)
-11. Precipitation (mm/h)
-12. Wind Speed (km/h)
-13. Wind Gust (km/h)
-14. Air Pressure (hPa)
+4. Runway Length (m)
+5. Airspeed (km/h)
+6. Fuel Level (%)
+7. Flight Duration (hours)
+8. Turbulence Level (0–10)
+9. Visibility (km)
+10. Temperature (°C)
+11. Dew Point (°C)
+12. Humidity (%)
+13. Precipitation (mm/h)
+14. Wind Speed (km/h)
+15. Wind Gust (km/h)
+16. Crosswind (km/h)
+17. Air Pressure (hPa)
+18. Night Flight (0 = day, 1 = night)
 
-The form also accepts optional **reference fields** (Flight Number, Flight Date,
-Route) that are displayed for record-keeping but do **not** affect the
-prediction.
+The form also accepts optional **reference fields** (Flight Number and Route as
+dropdowns, plus Flight Date) that are displayed for record-keeping but do
+**not** affect the prediction.
 
 ## Installation & Running Locally
 

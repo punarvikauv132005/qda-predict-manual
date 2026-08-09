@@ -33,8 +33,25 @@
                 <label class="form-label fw-semibold" for="flight_no">Flight Number</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="fa-solid fa-ticket"></i></span>
-                  <input type="text" class="form-control" id="flight_no"
-                         name="flight_no" placeholder="e.g. AI-101" value="{{ form_values.flight_no or '' }}">
+                  <select id="flight_no" name="flight_no" class="form-select">
+                    <option value="">-- Select flight number (optional) --</option>
+                    <option value="AI-101">AI-101 (Air India)</option>
+                    <option value="AI-201">AI-201 (Air India)</option>
+                    <option value="6E-201">6E-201 (IndiGo)</option>
+                    <option value="6E-504">6E-504 (IndiGo)</option>
+                    <option value="SG-814">SG-814 (SpiceJet)</option>
+                    <option value="UK-863">UK-863 (Vistara)</option>
+                    <option value="IX-334">IX-334 (Air India Express)</option>
+                    <option value="I5-722">I5-722 (Akasa Air)</option>
+                    <option value="QP-142">QP-142 (Star Air)</option>
+                    <option value="EK-506">EK-506 (Emirates)</option>
+                    <option value="EY-209">EY-209 (Etihad)</option>
+                    <option value="QR-570">QR-570 (Qatar Airways)</option>
+                    <option value="BA-117">BA-117 (British Airways)</option>
+                    <option value="LH-756">LH-756 (Lufthansa)</option>
+                    <option value="SQ-421">SQ-421 (Singapore Airlines)</option>
+                    <option value="TG-325">TG-325 (Thai Airways)</option>
+                  </select>
                 </div>
               </div>
               <div class="col-md-4">
@@ -49,8 +66,24 @@
                 <label class="form-label fw-semibold" for="route">Route</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="fa-solid fa-route"></i></span>
-                  <input type="text" class="form-control" id="route"
-                         name="route" placeholder="e.g. Bengaluru → Mumbai" value="{{ form_values.route or '' }}">
+                  <select id="route" name="route" class="form-select">
+                    <option value="">-- Select route (optional) --</option>
+                    <option value="Bengaluru to Mumbai">Bengaluru &rarr; Mumbai</option>
+                    <option value="Bengaluru to Delhi">Bengaluru &rarr; Delhi</option>
+                    <option value="Bengaluru to Chennai">Bengaluru &rarr; Chennai</option>
+                    <option value="Bengaluru to Hyderabad">Bengaluru &rarr; Hyderabad</option>
+                    <option value="Bengaluru to Kolkata">Bengaluru &rarr; Kolkata</option>
+                    <option value="Mumbai to Delhi">Mumbai &rarr; Delhi</option>
+                    <option value="Delhi to Mumbai">Delhi &rarr; Mumbai</option>
+                    <option value="Chennai to Hyderabad">Chennai &rarr; Hyderabad</option>
+                    <option value="Delhi to Dubai">Delhi &rarr; Dubai</option>
+                    <option value="Mumbai to Dubai">Mumbai &rarr; Dubai</option>
+                    <option value="Bengaluru to Dubai">Bengaluru &rarr; Dubai</option>
+                    <option value="Delhi to Singapore">Delhi &rarr; Singapore</option>
+                    <option value="Chennai to Singapore">Chennai &rarr; Singapore</option>
+                    <option value="Mumbai to London">Mumbai &rarr; London</option>
+                    <option value="Delhi to Frankfurt">Delhi &rarr; Frankfurt</option>
+                  </select>
                 </div>
               </div>
 
@@ -116,6 +149,17 @@
                          name="altitude" placeholder="e.g. 35000" value="{{ form_values.altitude or '' }}">
                 </div>
                 <div class="form-text">Range: 0 - 40,000 ft</div>
+              </div>
+
+              <!-- Runway Length -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="runway_length">Runway Length (m) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-road"></i></span>
+                  <input type="number" step="1" min="800" max="4000" class="form-control" id="runway_length"
+                         name="runway_length" placeholder="e.g. 3050" value="{{ form_values.runway_length or '' }}" required>
+                </div>
+                <div class="form-text">Range: 800 - 4,000 m</div>
               </div>
 
               <!-- Airspeed -->
@@ -190,6 +234,17 @@
                 <div class="form-text">Range: -30 &deg;C to 50 &deg;C</div>
               </div>
 
+              <!-- Dew Point -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="dew_point">Dew Point (&deg;C) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-droplet-slash"></i></span>
+                  <input type="number" step="0.1" min="-40" max="30" class="form-control" id="dew_point"
+                         name="dew_point" placeholder="e.g. 15" value="{{ form_values.dew_point or '' }}" required>
+                </div>
+                <div class="form-text">Range: -40 &deg;C to 30 &deg;C (small temp-dew spread = fog risk)</div>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label fw-semibold" for="humidity">Humidity (%) <span class="text-danger">*</span></label>
                 <div class="input-group">
@@ -232,6 +287,17 @@
                 <div class="form-text">Range: 0 - 100 km/h</div>
               </div>
 
+              <!-- Crosswind -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="crosswind">Crosswind (km/h) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wind"></i></span>
+                  <input type="number" step="0.1" min="0" max="40" class="form-control" id="crosswind"
+                         name="crosswind" placeholder="e.g. 10" value="{{ form_values.crosswind or '' }}" required>
+                </div>
+                <div class="form-text">Range: 0 - 40 km/h</div>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label fw-semibold" for="air_pressure">Air Pressure (hPa) <span class="text-danger">*</span></label>
                 <div class="input-group">
@@ -240,6 +306,19 @@
                          name="air_pressure" placeholder="e.g. 1013" value="{{ form_values.air_pressure or '' }}" required>
                 </div>
                 <div class="form-text">Range: 950 - 1,050 hPa</div>
+              </div>
+
+              <!-- Night Flight -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="night_flight">Night Flight <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-moon"></i></span>
+                  <select id="night_flight" name="night_flight" class="form-select" required>
+                    <option value="0">No (0) — Day flight</option>
+                    <option value="1">Yes (1) — Night flight</option>
+                  </select>
+                </div>
+                <div class="form-text">Night operations carry slightly higher risk.</div>
               </div>
 
               <div class="col-12 text-center mt-4">

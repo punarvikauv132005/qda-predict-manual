@@ -50,34 +50,42 @@ FEATURES = [
     "aircraft_age",
     "engine_health",
     "altitude",
+    "runway_length",
     "airspeed",
     "fuel_level",
     "flight_duration",
     "turbulence",
     "visibility",
     "temperature",
+    "dew_point",
     "humidity",
     "precipitation",
     "wind_speed",
     "wind_gust",
+    "crosswind",
     "air_pressure",
+    "night_flight",
 ]
 
 FEATURE_LABELS = {
     "aircraft_age": "Aircraft Age (years)",
     "engine_health": "Engine Health (%)",
     "altitude": "Altitude (ft)",
+    "runway_length": "Runway Length (m)",
     "airspeed": "Airspeed (km/h)",
     "fuel_level": "Fuel Level (%)",
     "flight_duration": "Flight Duration (hours)",
     "turbulence": "Turbulence Level (0-10)",
     "visibility": "Visibility (km)",
     "temperature": "Temperature (degC)",
+    "dew_point": "Dew Point (degC)",
     "humidity": "Humidity (%)",
     "precipitation": "Precipitation (mm/h)",
     "wind_speed": "Wind Speed (km/h)",
     "wind_gust": "Wind Gust (km/h)",
+    "crosswind": "Crosswind (km/h)",
     "air_pressure": "Air Pressure (hPa)",
+    "night_flight": "Night Flight (0/1)",
 }
 
 CLASSES = ["Low Risk", "Medium Risk", "High Risk"]
@@ -89,17 +97,21 @@ BOUNDS = {
     "aircraft_age": (1.0, 40.0),
     "engine_health": (40.0, 100.0),
     "altitude": (0.0, 40000.0),
+    "runway_length": (800.0, 4000.0),
     "airspeed": (200.0, 1000.0),
     "fuel_level": (5.0, 100.0),
     "flight_duration": (0.5, 15.0),
     "turbulence": (0.0, 10.0),
     "visibility": (0.0, 15.0),
     "temperature": (-30.0, 50.0),
+    "dew_point": (-40.0, 30.0),
     "humidity": (10.0, 100.0),
     "precipitation": (0.0, 50.0),
     "wind_speed": (0.0, 80.0),
     "wind_gust": (0.0, 100.0),
+    "crosswind": (0.0, 40.0),
     "air_pressure": (950.0, 1050.0),
+    "night_flight": (0.0, 1.0),
 }
 
 
@@ -108,28 +120,39 @@ def generate_dataset(n: int) -> pd.DataFrame:
     data: dict[str, np.ndarray] = {}
     for feat in FEATURES:
         lo, hi = BOUNDS[feat]
-        data[feat] = RNG.uniform(lo, hi, n)
+        if feat == "night_flight":
+            data[feat] = RNG.integers(0, 2, n).astype(float)  # 0 = day, 1 = night
+        else:
+            data[feat] = RNG.uniform(lo, hi, n)
 
     # Normalise every factor to roughly [0, 1] so weights are interpretable
     def norm(feat: str) -> np.ndarray:
         lo, hi = BOUNDS[feat]
         return (data[feat] - lo) / (hi - lo)
 
+    # Temperature - dew point spread (small spread -> fog / low visibility risk)
+    dew_spread = np.abs(data["temperature"] - data["dew_point"])
+    dew_spread_risk = 1.0 - np.clip(dew_spread / 90.0, 0.0, 1.0)
+
     score = (
-        0.10 * norm("aircraft_age")
-        + 0.16 * (1.0 - norm("engine_health"))
-        + 0.07 * norm("altitude")
+        0.09 * norm("aircraft_age")
+        + 0.15 * (1.0 - norm("engine_health"))
+        + 0.06 * norm("altitude")
+        + 0.04 * (1.0 - norm("runway_length"))
         + 0.05 * norm("airspeed")
-        + 0.09 * (1.0 - norm("fuel_level"))
-        + 0.07 * norm("flight_duration")
-        + 0.13 * norm("turbulence")
-        + 0.13 * (1.0 - norm("visibility"))
+        + 0.08 * (1.0 - norm("fuel_level"))
+        + 0.06 * norm("flight_duration")
+        + 0.12 * norm("turbulence")
+        + 0.12 * (1.0 - norm("visibility"))
         + 0.04 * np.abs(data["temperature"]) / 40.0
+        + 0.04 * dew_spread_risk
         + 0.03 * norm("humidity")
         + 0.04 * norm("precipitation")
-        + 0.12 * norm("wind_speed")
+        + 0.11 * norm("wind_speed")
         + 0.05 * norm("wind_gust")
+        + 0.05 * norm("crosswind")
         + 0.04 * np.abs(data["air_pressure"] - 1013.25) / 40.0
+        + 0.04 * norm("night_flight")
         + RNG.normal(0.0, 0.055, n)  # measurement / modelling noise
     )
 

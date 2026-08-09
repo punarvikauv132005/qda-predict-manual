@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}About | Aviation Accident Prediction System{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <div class="hero-overlay"></div>
+  <div class="container position-relative text-center text-white">
+    <h1 class="fw-bold">About the Project</h1>
+    <p class="lead">Understanding aviation risk prediction with QDA</p>
+  </div>
+</div>
+
+<!-- ============ What is Aviation Accident Prediction ============ -->
+<section class="section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 reveal">
+        <h2 class="fw-bold">What is Aviation Accident Prediction?</h2>
+        <div class="heading-line"></div>
+        <p class="mt-3">
+          Aviation accident prediction is the process of using historical flight
+          data, weather conditions and aircraft parameters to estimate the
+          probability that a particular flight will encounter an accident or
+          safety incident.
+        </p>
+        <p>
+          Instead of reacting after a problem occurs, predictive systems allow
+          airlines, pilots and ground staff to take proactive safety measures —
+          delaying a flight, adjusting speed, or performing additional
+          inspections — before a risky situation develops.
+        </p>
+        <ul class="about-list">
+          <li><i class="fa-solid fa-check text-sky"></i> Proactive risk mitigation</li>
+          <li><i class="fa-solid fa-check text-sky"></i> Combines aircraft, pilot &amp; weather factors</li>
+          <li><i class="fa-solid fa-check text-sky"></i> Supports operational decision-making</li>
+          <li><i class="fa-solid fa-check text-sky"></i> Improves overall flight safety culture</li>
+        </ul>
+      </div>
+      <div class="col-lg-6 reveal">
+        <div class="info-card shadow-sm">
+          <i class="fa-solid fa-plane-circle-check info-card-icon"></i>
+          <h5 class="fw-bold mt-3">Why It Matters</h5>
+          <p>
+            Every year, weather and mechanical factors contribute to thousands of
+            flight incidents. A reliable early-warning system can be the
+            difference between a routine flight and an emergency.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ What is QDA ============ -->
+<section class="section bg-soft">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">What is Quadratic Discriminant Analysis?</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-lg-6 reveal">
+        <div class="method-card h-100">
+          <i class="fa-solid fa-square-root-variable method-icon"></i>
+          <h5 class="fw-bold mt-3">The Method</h5>
+          <p class="mb-3">
+            QDA is a supervised classification algorithm that assumes each class
+            follows a <strong>multivariate Gaussian (normal) distribution</strong>.
+            Unlike Linear Discriminant Analysis (LDA), QDA allows every class to
+            have its <strong>own covariance matrix</strong>, producing curved
+            (quadratic) decision boundaries.
+          </p>
+          <p class="mb-0">
+            For each feature vector <em>x</em>, QDA computes the probability that
+            <em>x</em> belongs to each class using Bayes' theorem, then assigns the
+            sample to the class with the highest posterior probability.
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-6 reveal">
+        <div class="method-card h-100">
+          <i class="fa-solid fa-calculator method-icon"></i>
+          <h5 class="fw-bold mt-3">How QDA Works</h5>
+          <ol class="method-steps">
+            <li>Estimate the mean vector for each risk class.</li>
+            <li>Estimate the covariance matrix for each risk class.</li>
+            <li>Compute the quadratic discriminant function for every class.</li>
+            <li>Calculate the posterior probability of each risk level.</li>
+            <li>Assign the flight to the class with the highest probability.</li>
+            <li>Return the confidence score as the prediction probability.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Why QDA ============ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">Why QDA Was Chosen</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-md-4 reveal">
+        <div class="why-card h-100">
+          <i class="fa-solid fa-wave-square why-icon"></i>
+          <h6 class="fw-bold mt-3">Handles Complex Boundaries</h6>
+          <p class="small mb-0">
+            Flight risk is rarely linear. QDA's quadratic decision surfaces capture
+            the non-linear relationships between weather and aircraft parameters.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="why-card h-100">
+          <i class="fa-solid fa-scale-balanced why-icon"></i>
+          <h6 class="fw-bold mt-3">Natural Probabilities</h6>
+          <p class="small mb-0">
+            QDA outputs a genuine probability for each risk class, giving pilots
+            and dispatchers an honest confidence score — not just a label.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="why-card h-100">
+          <i class="fa-solid fa-bolt why-icon"></i>
+          <h6 class="fw-bold mt-3">Fast &amp; Interpretable</h6>
+          <p class="small mb-0">
+            QDA trains and predicts in milliseconds on modest hardware, making it
+            ideal for real-time, in-flight risk assessment.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Project Objectives ============ -->
+<section class="section bg-soft">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">Project Objectives</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="objective-card text-center h-100">
+          <i class="fa-solid fa-bullseye obj-icon"></i>
+          <p class="small mt-2 mb-0">Classify flight risk into Low, Medium and High using QDA.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="objective-card text-center h-100">
+          <i class="fa-solid fa-cloud-sun obj-icon"></i>
+          <p class="small mt-2 mb-0">Include manually entered weather parameters in the prediction.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="objective-card text-center h-100">
+          <i class="fa-solid fa-list-check obj-icon"></i>
+          <p class="small mt-2 mb-0">Provide clear, actionable safety recommendations per risk level.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="objective-card text-center h-100">
+          <i class="fa-solid fa-chart-pie obj-icon"></i>
+          <p class="small mt-2 mb-0">Offer a dashboard with model accuracy and dataset analytics.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Workflow Diagram ============ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">System Workflow</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="workflow reveal">
+      <div class="workflow-step">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>Input Flight Parameters</span>
+      </div>
+      <i class="fa-solid fa-angles-right workflow-arrow"></i>
+      <div class="workflow-step">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <span>Manual Weather Input</span>
+      </div>
+      <i class="fa-solid fa-angles-right workflow-arrow"></i>
+      <div class="workflow-step">
+        <i class="fa-solid fa-gears"></i>
+        <span>Preprocessing &amp; Scaling</span>
+      </div>
+      <i class="fa-solid fa-angles-right workflow-arrow"></i>
+      <div class="workflow-step">
+        <i class="fa-solid fa-brain"></i>
+        <span>QDA Classification</span>
+      </div>
+      <i class="fa-solid fa-angles-right workflow-arrow"></i>
+      <div class="workflow-step">
+        <i class="fa-solid fa-file-shield"></i>
+        <span>Risk Report &amp; Advice</span>
+      </div>
+    </div>
+    <p class="text-center text-muted mt-4 small">
+      The complete flow runs in under one second from form submission to recommendation.
+    </p>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Aviation Accident Prediction System{% endblock %}
+{% block content %}
+
+<div class="page-hero page-hero-small">
+  <div class="hero-overlay"></div>
+  <div class="container position-relative text-center text-white">
+    <h1 class="fw-bold">Analytics Dashboard</h1>
+    <p class="lead mb-0">Model performance and dataset statistics</p>
+  </div>
+</div>
+
+<section class="section bg-soft">
+  <div class="container">
+
+    <!-- ============ KPI Cards ============ -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="kpi-card">
+          <i class="fa-solid fa-bullseye kpi-icon"></i>
+          <div class="kpi-value">{{ (accuracy * 100)|round(1) }}%</div>
+          <div class="kpi-label">Model Accuracy</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="kpi-card">
+          <i class="fa-solid fa-database kpi-icon"></i>
+          <div class="kpi-value">{{ dataset_stats.total_samples }}</div>
+          <div class="kpi-label">Dataset Records</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="kpi-card">
+          <i class="fa-solid fa-layer-group kpi-icon"></i>
+          <div class="kpi-value">{{ dataset_stats.feature_ranges|length }}</div>
+          <div class="kpi-label">Features Used</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="kpi-card">
+          <i class="fa-solid fa-diagram-project kpi-icon"></i>
+          <div class="kpi-value">{{ dataset_stats.test_samples }}</div>
+          <div class="kpi-label">Test Samples</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- ============ Last Prediction ============ -->
+      <div class="col-lg-7 reveal">
+        <div class="form-card h-100">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-gauge-high text-sky me-2"></i>Latest Prediction</h6>
+          {% if last_prediction %}
+          <div class="last-prediction risk-{{ last_prediction.risk_meta.code }}">
+            <div class="d-flex align-items-center gap-3">
+              <i class="fa-solid {{ last_prediction.risk_meta.icon }} risk-result-icon"></i>
+              <div>
+                <div class="fw-bold fs-5">{{ last_prediction.label }}</div>
+                <div class="small">Confidence: {{ last_prediction.confidence }}%</div>
+              </div>
+            </div>
+            <div class="mt-3" style="height: 200px;">
+              <canvas id="lastProbChart"></canvas>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-inbox fa-3x mb-3"></i>
+            <p class="mb-2">No prediction made yet in this session.</p>
+            <a href="{{ url_for('prediction') }}" class="btn btn-sky btn-sm fw-semibold">
+              <i class="fa-solid fa-gauge-high me-1"></i>Make a Prediction
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ============ Class Distribution ============ -->
+      <div class="col-lg-5 reveal">
+        <div class="form-card h-100">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-sky me-2"></i>Dataset Class Distribution</h6>
+          <div style="height: 260px;">
+            <canvas id="classDistChart"></canvas>
+          </div>
+          <div class="d-flex justify-content-center gap-4 mt-3 small">
+            {% for cls in classes %}
+            <span><i class="fa-solid fa-circle me-1" style="color: {{ '#28a745' if cls == 'Low Risk' else ('#ffc107' if cls == 'Medium Risk' else '#dc3545') }}"></i>{{ cls }}: {{ dataset_stats.class_counts[cls] }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Confusion Matrix ============ -->
+      <div class="col-lg-5 reveal">
+        <div class="form-card h-100">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-table-cells text-sky me-2"></i>Confusion Matrix</h6>
+          <div class="text-center">
+            <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}"
+                 alt="Confusion Matrix" class="img-fluid confusion-img">
+          </div>
+          <p class="text-muted small mt-3 mb-0">
+            Test-set predictions of the QDA model (80/20 stratified split).
+          </p>
+        </div>
+      </div>
+
+      <!-- ============= Feature Ranges ============= -->
+      <div class="col-lg-7 reveal">
+        <div class="form-card h-100">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-sky me-2"></i>Feature Input Ranges</h6>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Minimum</th>
+                  <th>Maximum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for feat, rng in dataset_stats.feature_ranges.items() %}
+                <tr>
+                  <td class="fw-semibold">{{ feature_labels[feat] }}</td>
+                  <td>{{ "%.2f"|format(rng[0]) }}</td>
+                  <td>{{ "%.2f"|format(rng[1]) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const classes = {{ classes | tojson }};
+    const classCounts = {{ dataset_stats.class_counts | tojson }};
+    const classColors = {
+      'Low Risk': '#28a745',
+      'Medium Risk': '#ffc107',
+      'High Risk': '#dc3545'
+    };
+
+    new Chart(document.getElementById('classDistChart'), {
+      type: 'doughnut',
+      data: {
+        labels: classes,
+        datasets: [{
+          data: classes.map(function (c) { return classCounts[c] || 0; }),
+          backgroundColor: classes.map(function (c) { return classColors[c]; }),
+          borderWidth: 3,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true } }
+        }
+      }
+    });
+
+    {% if last_prediction %}
+    const probs = {{ last_prediction.probability_list | tojson }};
+    new Chart(document.getElementById('lastProbChart'), {
+      type: 'bar',
+      data: {
+        labels: classes,
+        datasets: [{
+          label: 'Probability (%)',
+          data: probs.map(function (p) { return p.value; }),
+          backgroundColor: classes.map(function (c) { return classColors[c]; }),
+          borderRadius: 6,
+          maxBarThickness: 46
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(11,37,69,0.08)' } }
+        }
+      }
+    });
+    {% endif %}
+  });
+</script>
+{% endblock %}

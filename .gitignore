@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+
+# Virtual environments
+venv.bak/
+
+# Environment variables
+.env
+.env.local
+.flaskenv
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Test / cache artifacts
+.pytest_cache/
+.mypy_cache/
+*.log
+
+# Trained model artifacts are committed intentionally (required by the app)
+# Do NOT ignore qda_model.pkl

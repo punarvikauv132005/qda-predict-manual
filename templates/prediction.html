@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Prediction | Aviation Accident Prediction System{% endblock %}
+{% block content %}
+
+<div class="page-hero page-hero-small">
+  <div class="hero-overlay"></div>
+  <div class="container position-relative text-center text-white">
+    <h1 class="fw-bold">Flight Risk Prediction</h1>
+    <p class="lead mb-0">Enter the flight and weather parameters manually and let QDA assess the risk</p>
+  </div>
+</div>
+
+<section class="section bg-soft">
+  <div class="container">
+    <div class="row g-4 justify-content-center">
+      <!-- ============ Input Form ============ -->
+      <div class="col-lg-10">
+        <div class="form-card reveal">
+          <h4 class="fw-bold mb-1"><i class="fa-solid fa-clipboard-list text-sky me-2"></i>Flight Parameters</h4>
+          <p class="text-muted small">Enter every parameter manually — including the current weather conditions.</p>
+
+          {% if error %}
+          <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+            <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+            <div>{{ error }}</div>
+          </div>
+          {% endif %}
+
+          <form id="predictionForm" method="POST" action="{{ url_for('predict') }}" novalidate>
+            <div class="row g-3">
+              <!-- ===== Reference details (optional, not used by the model) ===== -->
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="flight_no">Flight Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-ticket"></i></span>
+                  <input type="text" class="form-control" id="flight_no"
+                         name="flight_no" placeholder="e.g. AI-101" value="{{ form_values.flight_no or '' }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="flight_date">Flight Date</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
+                  <input type="date" class="form-control" id="flight_date"
+                         name="flight_date" value="{{ form_values.flight_date or '' }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="route">Route</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-route"></i></span>
+                  <input type="text" class="form-control" id="route"
+                         name="route" placeholder="e.g. Bengaluru → Mumbai" value="{{ form_values.route or '' }}">
+                </div>
+              </div>
+
+              <!-- Airport (reference only) -->
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="airport">Airport</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-tower-broadcast"></i></span>
+                  <select id="airport" name="airport" class="form-select">
+                    <option value="">-- Select an airport (optional) --</option>
+                  </select>
+                </div>
+                <div class="form-text">For reference only — weather parameters below are entered manually.</div>
+              </div>
+
+              <!-- Aircraft Type -->
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="aircraft_type">Aircraft Type <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-plane"></i></span>
+                  <select id="aircraft_type" name="aircraft_type" class="form-select" required>
+                    <option value="">-- Select aircraft type --</option>
+                    <option value="Boeing 737">Boeing 737</option>
+                    <option value="Airbus A320">Airbus A320</option>
+                    <option value="Boeing 747">Boeing 747</option>
+                    <option value="Airbus A380">Airbus A380</option>
+                    <option value="Embraer E190">Embraer E190</option>
+                    <option value="Bombardier CRJ900">Bombardier CRJ900</option>
+                    <option value="Cessna 172">Cessna 172</option>
+                    <option value="Piper PA-28">Piper PA-28</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Aircraft Age -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="aircraft_age">Aircraft Age (years)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-hourglass-half"></i></span>
+                  <input type="number" step="0.1" min="1" max="40" class="form-control" id="aircraft_age"
+                         name="aircraft_age" placeholder="e.g. 12.5" value="{{ form_values.aircraft_age or '' }}">
+                </div>
+                <div class="form-text">Range: 1 - 40 years</div>
+              </div>
+
+              <!-- Engine Health -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="engine_health">Engine Health (%)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-gears"></i></span>
+                  <input type="number" step="1" min="40" max="100" class="form-control" id="engine_health"
+                         name="engine_health" placeholder="e.g. 92" value="{{ form_values.engine_health or '' }}">
+                </div>
+                <div class="form-text">Range: 40 - 100%</div>
+              </div>
+
+              <!-- Altitude -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="altitude">Altitude (ft)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-mountain"></i></span>
+                  <input type="number" step="1" min="0" max="40000" class="form-control" id="altitude"
+                         name="altitude" placeholder="e.g. 35000" value="{{ form_values.altitude or '' }}">
+                </div>
+                <div class="form-text">Range: 0 - 40,000 ft</div>
+              </div>
+
+              <!-- Airspeed -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="airspeed">Airspeed (km/h)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-gauge-high"></i></span>
+                  <input type="number" step="1" min="200" max="1000" class="form-control" id="airspeed"
+                         name="airspeed" placeholder="e.g. 850" value="{{ form_values.airspeed or '' }}">
+                </div>
+                <div class="form-text">Range: 200 - 1,000 km/h</div>
+              </div>
+
+              <!-- Fuel Level -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="fuel_level">Fuel Level (%)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-gas-pump"></i></span>
+                  <input type="number" step="1" min="5" max="100" class="form-control" id="fuel_level"
+                         name="fuel_level" placeholder="e.g. 85" value="{{ form_values.fuel_level or '' }}">
+                </div>
+                <div class="form-text">Range: 5 - 100%</div>
+              </div>
+
+              <!-- Flight Duration -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="flight_duration">Flight Duration (hours)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-clock"></i></span>
+                  <input type="number" step="0.1" min="0.5" max="15" class="form-control" id="flight_duration"
+                         name="flight_duration" placeholder="e.g. 8.5" value="{{ form_values.flight_duration or '' }}">
+                </div>
+                <div class="form-text">Range: 0.5 - 15 hours</div>
+              </div>
+
+              <!-- Turbulence Level -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="turbulence">Turbulence Level</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wind"></i></span>
+                  <input type="number" step="0.1" min="0" max="10" class="form-control" id="turbulence"
+                         name="turbulence" placeholder="e.g. 3.5" value="{{ form_values.turbulence or '' }}">
+                </div>
+                <div class="form-text">Range: 0 (calm) - 10 (severe)</div>
+              </div>
+
+              <!-- ===== Weather Parameters (manual) ===== -->
+              <div class="col-12 mt-4">
+                <div class="weather-fill-header">
+                  <i class="fa-solid fa-cloud-sun-rain me-2 text-sky"></i>
+                  <span class="fw-semibold">Weather Parameters (enter manually)</span>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="visibility">Visibility (km) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-eye"></i></span>
+                  <input type="number" step="0.1" min="0" max="15" class="form-control" id="visibility"
+                         name="visibility" placeholder="e.g. 10" value="{{ form_values.visibility or '' }}" required>
+                </div>
+                <div class="form-text">Range: 0 - 15 km</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="temperature">Temperature (&deg;C) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-temperature-half"></i></span>
+                  <input type="number" step="0.1" min="-30" max="50" class="form-control" id="temperature"
+                         name="temperature" placeholder="e.g. 28" value="{{ form_values.temperature or '' }}" required>
+                </div>
+                <div class="form-text">Range: -30 &deg;C to 50 &deg;C</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="humidity">Humidity (%) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-droplet"></i></span>
+                  <input type="number" step="1" min="10" max="100" class="form-control" id="humidity"
+                         name="humidity" placeholder="e.g. 65" value="{{ form_values.humidity or '' }}" required>
+                </div>
+                <div class="form-text">Range: 10 - 100%</div>
+              </div>
+
+              <!-- Precipitation -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="precipitation">Precipitation (mm/h) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-cloud-rain"></i></span>
+                  <input type="number" step="0.1" min="0" max="50" class="form-control" id="precipitation"
+                         name="precipitation" placeholder="e.g. 5" value="{{ form_values.precipitation or '' }}" required>
+                </div>
+                <div class="form-text">Range: 0 (dry) - 50 mm/h (heavy rain)</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="wind_speed">Wind Speed (km/h) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wind"></i></span>
+                  <input type="number" step="0.1" min="0" max="80" class="form-control" id="wind_speed"
+                         name="wind_speed" placeholder="e.g. 15" value="{{ form_values.wind_speed or '' }}" required>
+                </div>
+                <div class="form-text">Range: 0 - 80 km/h</div>
+              </div>
+
+              <!-- Wind Gust -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="wind_gust">Wind Gust (km/h) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wind"></i></span>
+                  <input type="number" step="0.1" min="0" max="100" class="form-control" id="wind_gust"
+                         name="wind_gust" placeholder="e.g. 45" value="{{ form_values.wind_gust or '' }}" required>
+                </div>
+                <div class="form-text">Range: 0 - 100 km/h</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="air_pressure">Air Pressure (hPa) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-compress"></i></span>
+                  <input type="number" step="0.1" min="950" max="1050" class="form-control" id="air_pressure"
+                         name="air_pressure" placeholder="e.g. 1013" value="{{ form_values.air_pressure or '' }}" required>
+                </div>
+                <div class="form-text">Range: 950 - 1,050 hPa</div>
+              </div>
+
+              <div class="col-12 text-center mt-4">
+                <button type="submit" id="predictBtn" class="btn btn-sky btn-lg fw-semibold px-5">
+                  <i class="fa-solid fa-shield-halved me-2"></i>Predict Risk
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="info-card mt-4 shadow-sm reveal">
+          <i class="fa-solid fa-circle-info info-card-icon"></i>
+          <h6 class="fw-bold mt-2">Entering Weather Manually</h6>
+          <p class="small mb-0">
+            Type the current (or forecast) weather values — temperature, wind speed,
+            humidity, air pressure and visibility — directly into the form. Use the
+            METAR / weather report for your airport, or run "what-if" scenarios by
+            changing the values before clicking Predict Risk.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Loading Overlay ============ -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box text-center">
+    <div class="loading-spinner">
+      <i class="fa-solid fa-plane-up"></i>
+    </div>
+    <h5 class="fw-bold mt-3 text-white">Analyzing Flight Risk...</h5>
+    <p class="text-white-50 small mb-0">Running Quadratic Discriminant Analysis</p>
+  </div>
+</div>
+
+{% endblock %}

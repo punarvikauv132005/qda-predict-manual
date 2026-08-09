@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Home | Aviation Accident Prediction System{% endblock %}
+{% block content %}
+
+<!-- ============ Hero Section ============ -->
+<section class="hero d-flex align-items-center text-white text-center">
+  <div class="hero-overlay"></div>
+  <div class="container position-relative">
+    <span class="hero-badge"><i class="fa-solid fa-satellite-dish me-2"></i>Manual Weather + Machine Learning</span>
+    <h1 class="hero-title display-3 fw-bold mt-4">
+      Aviation Accident Prediction System
+    </h1>
+    <p class="hero-subtitle lead mx-auto mt-3">
+      using <span class="text-sky fw-semibold">Quadratic Discriminant Analysis (QDA)</span>
+    </p>
+    <p class="hero-text mx-auto mt-3">
+      Enter flight and weather parameters manually and instantly get a
+      colour-coded risk assessment with safety recommendations.
+    </p>
+    <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+      <a href="{{ url_for('prediction') }}" class="btn btn-sky btn-lg fw-semibold px-4">
+        <i class="fa-solid fa-rocket me-2"></i>Start Prediction
+      </a>
+      <a href="{{ url_for('about') }}" class="btn btn-outline-light btn-lg fw-semibold px-4">
+        <i class="fa-solid fa-book-open me-2"></i>Learn More
+      </a>
+    </div>
+    <div class="hero-scroll mt-5">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Risk Classes ============ -->
+<section class="section bg-soft" id="risk-classes">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">Prediction Output</h2>
+      <div class="heading-line mx-auto"></div>
+      <p class="text-muted mt-3">Every flight is classified into one of three risk categories.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4 reveal">
+        <div class="risk-card low">
+          <i class="fa-solid fa-circle-check risk-icon"></i>
+          <h5 class="fw-bold mt-3">Low Risk</h5>
+          <p>Flight conditions are safe. Standard operating procedures are sufficient.</p>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="risk-card medium">
+          <i class="fa-solid fa-circle-exclamation risk-icon"></i>
+          <h5 class="fw-bold mt-3">Medium Risk</h5>
+          <p>Monitor weather carefully, reduce speed if required and keep in contact with ATC.</p>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="risk-card high">
+          <i class="fa-solid fa-triangle-exclamation risk-icon"></i>
+          <h5 class="fw-bold mt-3">High Risk</h5>
+          <p>Delay the flight, notify Air Traffic Control and perform an aircraft inspection.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ How It Works ============ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">How It Works</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-md-3 reveal">
+        <div class="step-card text-center">
+          <div class="step-number">1</div>
+          <i class="fa-solid fa-sliders step-icon"></i>
+          <h6 class="fw-bold mt-3">Enter Flight Data</h6>
+          <p class="text-muted small">Fill in aircraft, engine and flight parameters.</p>
+        </div>
+      </div>
+      <div class="col-md-3 reveal">
+        <div class="step-card text-center">
+          <div class="step-number">2</div>
+          <i class="fa-solid fa-cloud-sun-rain step-icon"></i>
+          <h6 class="fw-bold mt-3">Enter Weather</h6>
+          <p class="text-muted small">Type in the current weather conditions manually.</p>
+        </div>
+      </div>
+      <div class="col-md-3 reveal">
+        <div class="step-card text-center">
+          <div class="step-number">3</div>
+          <i class="fa-solid fa-brain step-icon"></i>
+          <h6 class="fw-bold mt-3">QDA Analysis</h6>
+          <p class="text-muted small">The trained Quadratic Discriminant Analysis model classifies the flight.</p>
+        </div>
+      </div>
+      <div class="col-md-3 reveal">
+        <div class="step-card text-center">
+          <div class="step-number">4</div>
+          <i class="fa-solid fa-file-shield step-icon"></i>
+          <h6 class="fw-bold mt-3">Get Recommendations</h6>
+          <p class="text-muted small">Receive a colour-coded risk report and safety advice.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Stats Strip ============ -->
+<section class="stats-strip text-white">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-6 col-lg-3 reveal">
+        <i class="fa-solid fa-database stat-icon"></i>
+        <h3 class="fw-bold stat-value" data-count="{{ dataset_stats.total_samples }}">0</h3>
+        <span>Dataset Records</span>
+      </div>
+      <div class="col-6 col-lg-3 reveal">
+        <i class="fa-solid fa-chart-line stat-icon"></i>
+        <h3 class="fw-bold stat-value" data-count="{{ (accuracy * 100)|round|int }}">0</h3>
+        <span>Model Accuracy (%)</span>
+      </div>
+      <div class="col-6 col-lg-3 reveal">
+        <i class="fa-solid fa-sliders stat-icon"></i>
+        <h3 class="fw-bold stat-value" data-count="{{ dataset_stats.feature_ranges|length }}">0</h3>
+        <span>Prediction Features</span>
+      </div>
+      <div class="col-6 col-lg-3 reveal">
+        <i class="fa-solid fa-arrows-spin stat-icon"></i>
+        <h3 class="fw-bold stat-value" data-count="3">0</h3>
+        <span>Risk Categories</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="section bg-soft">
+  <div class="container text-center reveal">
+    <h2 class="fw-bold">Ready to assess a flight?</h2>
+    <p class="text-muted mt-2 mb-4">Get an instant, science-backed risk analysis in seconds.</p>
+    <a href="{{ url_for('prediction') }}" class="btn btn-sky btn-lg fw-semibold px-5">
+      <i class="fa-solid fa-gauge-high me-2"></i>Predict a Flight
+    </a>
+  </div>
+</section>
+
+{% endblock %}

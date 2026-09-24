@@ -6,16 +6,17 @@
 <section class="hero d-flex align-items-center text-white text-center">
   <div class="hero-overlay"></div>
   <div class="container position-relative">
-    <span class="hero-badge"><i class="fa-solid fa-satellite-dish me-2"></i>Manual Weather + Machine Learning</span>
+    <span class="hero-badge"><i class="fa-solid fa-satellite-dish me-2"></i>Manual Weather + In-Flight Dynamics + Machine Learning</span>
     <h1 class="hero-title display-3 fw-bold mt-4">
       Aviation Accident Prediction System
     </h1>
     <p class="hero-subtitle lead mx-auto mt-3">
-      using <span class="text-sky fw-semibold">Quadratic Discriminant Analysis (QDA)</span>
+      using <span class="text-sky fw-semibold">QDA + ML Ensemble</span>
+      (Random Forest · Gradient Boosting · Logistic Regression)
     </p>
     <p class="hero-text mx-auto mt-3">
-      Enter flight and weather parameters manually and instantly get a
-      colour-coded risk assessment with safety recommendations.
+      Enter flight, weather and in-flight movement parameters manually and get an
+      instant colour-coded risk assessment, accident detection and targeted safety measures.
     </p>
     <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
       <a href="{{ url_for('prediction') }}" class="btn btn-sky btn-lg fw-semibold px-4">
@@ -93,16 +94,16 @@
         <div class="step-card text-center">
           <div class="step-number">3</div>
           <i class="fa-solid fa-brain step-icon"></i>
-          <h6 class="fw-bold mt-3">QDA Analysis</h6>
-          <p class="text-muted small">The trained Quadratic Discriminant Analysis model classifies the flight.</p>
+          <h6 class="fw-bold mt-3">Ensemble Analysis</h6>
+          <p class="text-muted small">QDA, Random Forest, Gradient Boosting and Logistic Regression vote together.</p>
         </div>
       </div>
       <div class="col-md-3 reveal">
         <div class="step-card text-center">
           <div class="step-number">4</div>
-          <i class="fa-solid fa-file-shield step-icon"></i>
-          <h6 class="fw-bold mt-3">Get Recommendations</h6>
-          <p class="text-muted small">Receive a colour-coded risk report and safety advice.</p>
+          <i class="fa-solid fa-bell step-icon"></i>
+          <h6 class="fw-bold mt-3">Accident Detection &amp; Advice</h6>
+          <p class="text-muted small">Receive the risk report, accident probability and targeted safety measures.</p>
         </div>
       </div>
     </div>
@@ -129,9 +130,9 @@
         <span>Prediction Features</span>
       </div>
       <div class="col-6 col-lg-3 reveal">
-        <i class="fa-solid fa-arrows-spin stat-icon"></i>
-        <h3 class="fw-bold stat-value" data-count="3">0</h3>
-        <span>Risk Categories</span>
+        <i class="fa-solid fa-brain stat-icon"></i>
+        <h3 class="fw-bold stat-value" data-count="{{ model_order|length }}">0</h3>
+        <span>ML Models (Ensemble)</span>
       </div>
     </div>
   </div>

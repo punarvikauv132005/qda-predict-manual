@@ -95,6 +95,62 @@
   </div>
 </section>
 
+<!-- ============ Ensemble / Hybrid Approach ============ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center section-heading reveal">
+      <h2 class="fw-bold">Hybrid ML Ensemble (QDA + More)</h2>
+      <div class="heading-line mx-auto"></div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-lg-7 reveal">
+        <div class="method-card h-100">
+          <i class="fa-solid fa-layer-group method-icon"></i>
+          <h5 class="fw-bold mt-3">Why an Ensemble?</h5>
+          <p class="mb-3">
+            Single classifiers can be biased or overfit in different ways. This system
+            trains <strong>four complementary classifiers</strong> on the same flight data and
+            combines them with a <strong>soft-voting ensemble</strong>:
+          </p>
+          <ul class="about-list mb-3">
+            <li><i class="fa-solid fa-check text-sky"></i> <strong>QDA</strong> — quadratic boundaries between risk classes.</li>
+            <li><i class="fa-solid fa-check text-sky"></i> <strong>Random Forest</strong> — robust to noise and captures feature interactions.</li>
+            <li><i class="fa-solid fa-check text-sky"></i> <strong>Gradient Boosting</strong> — strong accuracy on structured data.</li>
+            <li><i class="fa-solid fa-check text-sky"></i> <strong>Logistic Regression</strong> — fast, interpretable baseline with class balancing.</li>
+            <li><i class="fa-solid fa-check text-sky"></i> <strong>Soft-Voting Ensemble</strong> — averages the probability outputs of all four.</li>
+          </ul>
+          <p class="mb-0 small text-muted">
+            Each model also votes individually, and the result page shows the full
+            <em>model consensus</em> so you can see whether all algorithms agree on the risk.
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-5 reveal">
+        <div class="method-card h-100">
+          <i class="fa-solid fa-chart-column method-icon"></i>
+          <h5 class="fw-bold mt-3">Test Accuracy Leaderboard</h5>
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead>
+              <tr><th>Model</th><th class="text-end">Accuracy</th></tr>
+            </thead>
+            <tbody>
+              {% for m in model_order %}
+              <tr {% if loop.last %}class="table-active fw-semibold"{% endif %}>
+                <td>{{ m }}</td>
+                <td class="text-end">{{ "%.2f"|format(model_accuracies[m]) }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <p class="small text-muted mt-3 mb-0">
+            Evaluated on the same held-out test set (80/20 stratified split).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ Why QDA ============ -->
 <section class="section">
   <div class="container">
@@ -148,25 +204,25 @@
       <div class="col-md-3 col-sm-6 reveal">
         <div class="objective-card text-center h-100">
           <i class="fa-solid fa-bullseye obj-icon"></i>
-          <p class="small mt-2 mb-0">Classify flight risk into Low, Medium and High using QDA.</p>
+          <p class="small mt-2 mb-0">Classify flight risk into Low, Medium and High using a QDA + ML ensemble.</p>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 reveal">
         <div class="objective-card text-center h-100">
           <i class="fa-solid fa-cloud-sun obj-icon"></i>
-          <p class="small mt-2 mb-0">Include manually entered weather parameters in the prediction.</p>
+          <p class="small mt-2 mb-0">Include manually entered weather and in-flight dynamics parameters.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 reveal">
+        <div class="objective-card text-center h-100">
+          <i class="fa-solid fa-bell obj-icon"></i>
+          <p class="small mt-2 mb-0">Detect accident probability with hard safety signatures per flight.</p>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 reveal">
         <div class="objective-card text-center h-100">
           <i class="fa-solid fa-list-check obj-icon"></i>
-          <p class="small mt-2 mb-0">Provide clear, actionable safety recommendations per risk level.</p>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6 reveal">
-        <div class="objective-card text-center h-100">
-          <i class="fa-solid fa-chart-pie obj-icon"></i>
-          <p class="small mt-2 mb-0">Offer a dashboard with model accuracy and dataset analytics.</p>
+          <p class="small mt-2 mb-0">Provide targeted safety measures driven by the top risk contributors.</p>
         </div>
       </div>
     </div>
@@ -198,12 +254,12 @@
       <i class="fa-solid fa-angles-right workflow-arrow"></i>
       <div class="workflow-step">
         <i class="fa-solid fa-brain"></i>
-        <span>QDA Classification</span>
+        <span>Ensemble Classification (QDA + RF + GBM + LR)</span>
       </div>
       <i class="fa-solid fa-angles-right workflow-arrow"></i>
       <div class="workflow-step">
-        <i class="fa-solid fa-file-shield"></i>
-        <span>Risk Report &amp; Advice</span>
+        <i class="fa-solid fa-bell"></i>
+        <span>Accident Detection &amp; Risk Report</span>
       </div>
     </div>
     <p class="text-center text-muted mt-4 small">

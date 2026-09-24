@@ -1,15 +1,18 @@
-# Aviation Accident Prediction System using QDA
+# Aviation Accident Prediction System using QDA + ML Ensemble
 
 A complete full-stack web application that predicts the risk of an aviation
-accident based on flight parameters and weather conditions **entered manually
-by the user**. The backend uses **Quadratic Discriminant Analysis (QDA)** from
-Scikit-learn to classify each flight into one of three risk categories:
+accident based on flight parameters, weather conditions and **in-flight
+movement parameters** entered **manually by the user**. The backend uses a
+**soft-voting ensemble of machine learning algorithms** — **Quadratic
+Discriminant Analysis (QDA)**, Random Forest, Gradient Boosting and Logistic
+Regression — to classify each flight into one of three risk categories and to
+**detect accident probability** with specific warning signatures:
 
 - 🟢 **Low Risk** — flight conditions are safe
 - 🟡 **Medium Risk** — monitor weather, reduce speed if required
-- 🔴 **High Risk** — delay flight, notify ATC, inspect aircraft
+- 🔴 **High Risk** — delayed/denied departure, notify ATC, targeted safety measures
 
-![Stack](https://img.shields.io/badge/Flask-3-blue) ![ML](https://img.shields.io/badge/Scikit--learn-QDA-orange) ![Frontend](https://img.shields.io/badge/Bootstrap-5-violet)
+![Stack](https://img.shields.io/badge/Flask-3-blue) ![ML](https://img.shields.io/badge/Scikit--learn-QDA%2BEnsemble-orange) ![Frontend](https://img.shields.io/badge/Bootstrap-5-violet)
 
 ---
 
@@ -18,18 +21,22 @@ Scikit-learn to classify each flight into one of three risk categories:
 | Feature | Description |
 | --- | --- |
 | Manual Weather Entry | Temperature, wind speed, humidity, air pressure & visibility are typed directly into the form (no API required). |
-| QDA Risk Model | A trained `QuadraticDiscriminantAnalysis` model classifies flights into Low / Medium / High risk. |
+| In-Flight Dynamics | Vertical speed, wind shear, stall margin, G-load, heading change, icing, vibration and more while the aircraft is moving. |
+| QDA + ML Ensemble | QDA, Random Forest, Gradient Boosting and Logistic Regression combined with a soft-voting ensemble — no single algorithm decides alone. |
+| Accident Detection | A dedicated accident probability gauge driven by the High-Risk posterior **plus hard safety signatures** (near-stall, wind shear, high sink rate, engine-critical, fuel-critical, severe icing, ...). |
+| Model Consensus | Shows how each of the 5 models voted for every prediction. |
+| All Risk Contributors | The full contributor breakdown — **including small (minor) contributors**, not just the top 3. |
+| Targeted Safety Measures | High/Medium-risk flights get **parameter-specific** actions — e.g. wind-shear escape manoeuvre, stall recovery, anti-ice activation — instead of generic advice only. |
 | Confidence Scores | Every prediction returns a probability for each risk class. |
-| Safety Recommendations | Colour-coded, action-oriented advice per risk level. |
-| Dashboard | Charts (Chart.js), model accuracy, confusion matrix image and dataset statistics. |
-| High-Risk Alert | Warning sound + pulsing emergency card for High Risk flights. |
+| Dashboard | Per-model accuracy comparison chart, model accuracy, confusion matrix image and dataset statistics. |
+| High-Risk Alert | Warning sound + pulsing emergency card for High Risk / accident-likely flights. |
 | Responsive UI | Modern aviation dashboard theme (navy / white / sky blue), smooth scrolling, fade effects and hover animations. |
 
 ## Tech Stack
 
 - **Frontend:** HTML5, CSS3, JavaScript, Bootstrap 5, Font Awesome, Chart.js
 - **Backend:** Python, Flask
-- **Machine Learning:** Scikit-learn — Quadratic Discriminant Analysis (QDA)
+- **Machine Learning:** Scikit-learn — QDA + Random Forest + Gradient Boosting + Logistic Regression (soft-voting ensemble)
 - **Model:** `qda_model.pkl` (loaded at app startup)
 - **Deployment:** GitHub + Render
 
@@ -70,15 +77,16 @@ aviation-accident-predictor/
 | --- | --- | --- |
 | `/` | Home | Hero section with aviation image, risk classes, how-it-works and Start Prediction button. |
 | `/about` | About | What is aviation accident prediction, what is QDA, why QDA, objectives and workflow diagram. |
-| `/prediction` | Prediction | Full input form (reference dropdowns + optional airport + aircraft type + 18 features) with manually entered weather. |
-| `/predict` (POST) | Result | Colour-coded risk card, probability, confidence, recommendations and top risk contributors. |
-| `/dashboard` | Dashboard | Model accuracy, confusion matrix, class distribution and dataset statistics. |
+| `/prediction` | Prediction | Full input form (reference dropdowns + optional airport + aircraft type + 28 features) with manually entered weather and in-flight dynamics. |
+| `/predict` (POST) | Result | Colour-coded risk card, accident detection panel, model consensus, probability, confidence, targeted safety measures and ALL risk contributors. |
+| `/dashboard` | Dashboard | Ensemble accuracy, per-model accuracy comparison, confusion matrix, class distribution and dataset statistics. |
 | `/contact` | Contact | Project guide, team members and college details. |
 
 ## Model Features
 
-The QDA model is trained on these 18 features:
+The ensemble is trained on these **28 features** (manual entry):
 
+**Aircraft / take-off**
 1. Aircraft Age (years)
 2. Engine Health (%)
 3. Altitude (ft)
@@ -87,6 +95,8 @@ The QDA model is trained on these 18 features:
 6. Fuel Level (%)
 7. Flight Duration (hours)
 8. Turbulence Level (0–10)
+
+**Weather**
 9. Visibility (km)
 10. Temperature (°C)
 11. Dew Point (°C)
@@ -98,9 +108,21 @@ The QDA model is trained on these 18 features:
 17. Air Pressure (hPa)
 18. Night Flight (0 = day, 1 = night)
 
+**Aircraft & in-flight dynamics (while moving)**
+19. Ground Speed (km/h)
+20. Vertical Speed (ft/min) — climb / sink rate
+21. Wind Shear (km/h)
+22. Stall Margin (km/h) above stall speed
+23. Vertical Acceleration (g)
+24. Heading Change (deg/min)
+25. Ice Accumulation (0–1)
+26. Maintenance Score (%)
+27. Pilot Experience (log hours)
+28. Vibration Level (0–10)
+
 The form also accepts optional **reference fields** (Flight Number and Route as
-dropdowns, plus Flight Date) that are displayed for record-keeping but do
-**not** affect the prediction.
+dropdowns, plus Flight Date and Airport) that are displayed for record-keeping
+but do **not** affect the prediction.
 
 ## Installation & Running Locally
 
@@ -129,15 +151,18 @@ python app.py
 Open <http://127.0.0.1:5000> in your browser.
 
 > **Note:** The `qda_model.pkl` and `dataset/aviation.csv` files are already
-> committed, so step 4 is optional. The dataset is synthetically generated
-> (see `train_model.py`) because a public dataset containing every required
-> field at flight level is not available.
+> committed, so step 4 is optional. Every model uses a fixed seed
+> (`random_state=42`) so a re-run reproduces the same ensemble. The dataset is
+> synthetically generated (see `train_model.py`) because a public dataset
+> containing every required field at flight level is not available.
 
-## Manual Weather Entry
+## Manual Weather & In-Flight Entry
 
 The prediction page has **no live weather API** — every field is entered by
-hand. An optional **Airport** dropdown is provided for reference only (it does
-not affect the prediction). The five weather parameters are:
+hand. The **Aircraft & In-Flight Dynamics** section (ground speed, vertical
+speed, wind shear, stall margin, G-load, heading change, icing, maintenance
+score, pilot hours, vibration) models the aircraft while it is moving, so the
+prediction reflects an in-motion flight rather than a static pre-flight check.
 
 1. Visibility (km)
 2. Temperature (°C)

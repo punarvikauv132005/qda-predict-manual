@@ -99,14 +99,31 @@
                  alt="Confusion Matrix" class="img-fluid confusion-img">
           </div>
           <p class="text-muted small mt-3 mb-0">
-            Test-set predictions of the QDA model (80/20 stratified split).
+            Test-set predictions of the soft-voting ensemble (80/20 stratified split).<br>
+            <span class="text-danger">High Risk</span> detection is deliberately conservative.
           </p>
         </div>
       </div>
 
-      <!-- ============= Feature Ranges ============= -->
+      <!-- ============= Model Accuracy Comparison ============= -->
       <div class="col-lg-7 reveal">
         <div class="form-card h-100">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-scale-balanced text-sky me-2"></i>Model Accuracy Comparison</h6>
+          <div style="height: 260px;">
+            <canvas id="modelAccChart"></canvas>
+          </div>
+          <p class="text-muted small mt-3 mb-0">
+            Per-model test accuracy (%) for QDA, Random Forest, Gradient Boosting,
+            Logistic Regression and the soft-voting ensemble on the same test split.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= Feature Ranges ============= -->
+    <div class="row g-4 mt-0">
+      <div class="col-12 reveal">
+        <div class="form-card">
           <h6 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-sky me-2"></i>Feature Input Ranges</h6>
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -191,6 +208,38 @@
       }
     });
     {% endif %}
+
+    const modelOrder = {{ model_order | tojson }};
+    const modelAcc = {{ model_accuracies | tojson }};
+    const accColorMap = {
+      'Quadratic Discriminant Analysis': '#0b2545',
+      'Random Forest': '#5b8def',
+      'Gradient Boosting': '#ffb703',
+      'Logistic Regression': '#23a55a',
+      'Ensemble (Soft Voting)': '#dc3545'
+    };
+    new Chart(document.getElementById('modelAccChart'), {
+      type: 'bar',
+      data: {
+        labels: modelOrder,
+        datasets: [{
+          label: 'Test Accuracy (%)',
+          data: modelOrder.map(function (m) { return modelAcc[m] || 0; }),
+          backgroundColor: modelOrder.map(function (m) { return accColorMap[m] || '#6c757d'; }),
+          borderRadius: 8,
+          maxBarThickness: 54
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, max: 100, grid: { color: 'rgba(11,37,69,0.08)' } }
+        }
+      }
+    });
   });
 </script>
 {% endblock %}

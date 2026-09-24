@@ -1,13 +1,19 @@
 """
 train_model.py
 ==============
-Generates the aviation flight dataset, trains a Quadratic Discriminant
-Analysis (QDA) classifier and persists everything the Flask application
-needs into ``qda_model.pkl``.
+Generates the aviation flight dataset, trains an ensemble of machine-learning
+classifiers (QDA, Random Forest, Gradient Boosting and Logistic Regression
+combined with a soft-voting ensemble) and persists everything the Flask
+application needs into ``qda_model.pkl``.
+
+The pipeline covers three modelling goals:
+  1. Risk classification  -> Low / Medium / High risk
+  2. Accident detection   -> probability + indicative signatures
+  3. Contribution analysis-> per-feature share of the high-risk score
 
 Outputs produced by running this script:
   * dataset/aviation.csv            - labelled flight records (training data)
-  * qda_model.pkl                   - pickled dict: model, scaler, metadata
+  * qda_model.pkl                   - pickled dict: models, scaler, metadata
   * static/images/confusion_matrix.png - confusion-matrix heatmap for the dashboard
 
 Run:  python train_model.py
@@ -26,7 +32,17 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+    VotingClassifier,
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -65,6 +81,17 @@ FEATURES = [
     "crosswind",
     "air_pressure",
     "night_flight",
+    # --- In-flight / motion parameters (aircraft moving) -----------------
+    "ground_speed",
+    "vertical_speed",
+    "wind_shear",
+    "stall_margin",
+    "g_load",
+    "heading_change",
+    "ice_accumulation",
+    "maintenance_score",
+    "pilot_hours",
+    "vibration_level",
 ]
 
 FEATURE_LABELS = {
@@ -86,6 +113,16 @@ FEATURE_LABELS = {
     "crosswind": "Crosswind (km/h)",
     "air_pressure": "Air Pressure (hPa)",
     "night_flight": "Night Flight (0/1)",
+    "ground_speed": "Ground Speed (km/h)",
+    "vertical_speed": "Vertical Speed (ft/min)",
+    "wind_shear": "Wind Shear (km/h)",
+    "stall_margin": "Stall Margin (km/h)",
+    "g_load": "Vertical Acceleration (g)",
+    "heading_change": "Heading Change (deg/min)",
+    "ice_accumulation": "Ice Accumulation (0-1)",
+    "maintenance_score": "Maintenance Score (%)",
+    "pilot_hours": "Pilot Experience (log hours)",
+    "vibration_level": "Vibration Level (0-10)",
 }
 
 CLASSES = ["Low Risk", "Medium Risk", "High Risk"]
@@ -112,6 +149,16 @@ BOUNDS = {
     "crosswind": (0.0, 40.0),
     "air_pressure": (950.0, 1050.0),
     "night_flight": (0.0, 1.0),
+    "ground_speed": (200.0, 1100.0),
+    "vertical_speed": (-3000.0, 3000.0),
+    "wind_shear": (0.0, 60.0),
+    "stall_margin": (0.0, 120.0),
+    "g_load": (0.5, 3.0),
+    "heading_change": (0.0, 40.0),
+    "ice_accumulation": (0.0, 1.0),
+    "maintenance_score": (40.0, 100.0),
+    "pilot_hours": (100.0, 20000.0),
+    "vibration_level": (0.0, 10.0),
 }
 
 
@@ -122,6 +169,9 @@ def generate_dataset(n: int) -> pd.DataFrame:
         lo, hi = BOUNDS[feat]
         if feat == "night_flight":
             data[feat] = RNG.integers(0, 2, n).astype(float)  # 0 = day, 1 = night
+        elif feat == "g_load":
+            # Vertical acceleration is usually near 1g with occasional excursions
+            data[feat] = np.clip(RNG.normal(1.0, 0.22, n), lo, hi)
         else:
             data[feat] = RNG.uniform(lo, hi, n)
 
@@ -133,6 +183,33 @@ def generate_dataset(n: int) -> pd.DataFrame:
     # Temperature - dew point spread (small spread -> fog / low visibility risk)
     dew_spread = np.abs(data["temperature"] - data["dew_point"])
     dew_spread_risk = 1.0 - np.clip(dew_spread / 90.0, 0.0, 1.0)
+
+    # Ice accumulation: airframe icing is most likely in the icing band
+    # (-12C..2C) combined with precipitation and moist air.
+    icing_band = (
+        (data["temperature"] >= -12.0)
+        & (data["temperature"] <= 2.0)
+        & (data["precipitation"] > 0.3)
+        & (data["humidity"] > 55.0)
+    )
+    data["ice_accumulation"] = np.where(
+        icing_band,
+        np.clip(0.45 + 0.6 * RNG.random(n), 0.0, 1.0),
+        data["ice_accumulation"],
+    )
+
+    # Vibration: degraded engines vibrate more
+    data["vibration_level"] = np.clip(
+        (1.0 - norm("engine_health")) * 6.0 + RNG.normal(0.8, 0.7, n), 0.0, 10.0
+    )
+
+    # Pilot experience risk uses a log scale (100h trainee vs 20000h veteran)
+    log_hours = np.log(data["pilot_hours"])
+    log_low, log_high = np.log(BOUNDS["pilot_hours"])
+    inexperience = 1.0 - np.clip((log_hours - log_low) / (log_high - log_low), 0.0, 1.0)
+
+    # Pilot / crew alertness is lower for very long night flights
+    fatigue = (norm("flight_duration") * 0.6 + norm("night_flight") * 0.4)
 
     score = (
         0.09 * norm("aircraft_age")
@@ -153,7 +230,19 @@ def generate_dataset(n: int) -> pd.DataFrame:
         + 0.05 * norm("crosswind")
         + 0.04 * np.abs(data["air_pressure"] - 1013.25) / 40.0
         + 0.04 * norm("night_flight")
-        + RNG.normal(0.0, 0.055, n)  # measurement / modelling noise
+        # --- In-flight / motion contributors --------------------------------
+        + 0.03 * norm("ground_speed")
+        + 0.06 * np.abs(data["vertical_speed"]) / 3000.0  # climb & sink risk
+        + 0.09 * norm("wind_shear")
+        + 0.08 * (1.0 - norm("stall_margin"))
+        + 0.06 * np.clip(np.abs(data["g_load"] - 1.0) / 1.5, 0.0, 1.0)
+        + 0.05 * norm("heading_change")
+        + 0.08 * norm("ice_accumulation")
+        + 0.08 * (1.0 - norm("maintenance_score"))
+        + 0.06 * inexperience
+        + 0.05 * norm("vibration_level")
+        + 0.03 * fatigue
+        + RNG.normal(0.0, 0.06, n)  # measurement / modelling noise
     )
 
     # Class thresholds -> roughly 40% low, 30% medium, 30% high
@@ -221,18 +310,87 @@ def main() -> None:
     X_train_s = scaler.fit_transform(X_train)
     X_test_s = scaler.transform(X_test)
 
-    print(">> Training Quadratic Discriminant Analysis ...")
+    # ------------------------------------------------------------------
+    # Train the individual classifiers
+    # ------------------------------------------------------------------
+    print(">> Training individual classifiers ...")
     qda = QuadraticDiscriminantAnalysis(reg_param=0.05)  # small regularisation
-    qda.fit(X_train_s, y_train)
+    rf = RandomForestClassifier(
+        n_estimators=300,
+        min_samples_leaf=2,
+        class_weight="balanced",
+        random_state=42,
+        n_jobs=-1,
+    )
+    gb = GradientBoostingClassifier(
+        n_estimators=220,
+        learning_rate=0.08,
+        max_depth=4,
+        subsample=0.9,
+        random_state=42,
+    )
+    lr = LogisticRegression(max_iter=3000, class_weight="balanced", random_state=42)
 
-    y_pred = qda.predict(X_test_s)
-    acc = accuracy_score(y_test, y_pred)
-    print(f"   test accuracy = {acc:.4f}")
+    models: dict[str, object] = {
+        "Quadratic Discriminant Analysis": qda,
+        "Random Forest": rf,
+        "Gradient Boosting": gb,
+        "Logistic Regression": lr,
+    }
+
+    for name, model in models.items():
+        model.fit(X_train_s, y_train)
+
+    # Soft-voting ensemble combines the probability outputs of every model
+    print(">> Building soft-voting ensemble ...")
+    ensemble = VotingClassifier(
+        estimators=[
+            ("qda", qda),
+            ("random_forest", rf),
+            ("gradient_boosting", gb),
+            ("logistic_regression", lr),
+        ],
+        voting="soft",
+        n_jobs=-1,
+    )
+    ensemble.fit(X_train_s, y_train)
+
+    # ------------------------------------------------------------------
+    # Evaluate every model + the ensemble
+    # ------------------------------------------------------------------
+    model_accuracies: dict[str, float] = {}
+    model_reports: dict[str, str] = {}
+    confusion_matrices: dict[str, list] = {}
+
+    for name, model in models.items():
+        y_pred = model.predict(X_test_s)
+        model_accuracies[name] = float(accuracy_score(y_test, y_pred))
+        model_reports[name] = classification_report(y_test, y_pred, target_names=CLASSES)
+        confusion_matrices[name] = confusion_matrix(y_test, y_pred).tolist()
+        print(f"   {name:33s} test accuracy = {model_accuracies[name]:.4f}")
+
+    y_pred = ensemble.predict(X_test_s)
+    acc = float(accuracy_score(y_test, y_pred))
+    model_accuracies["Ensemble (Soft Voting)"] = acc
+    model_reports["Ensemble (Soft Voting)"] = classification_report(
+        y_test, y_pred, target_names=CLASSES
+    )
+    print(f"   {'Ensemble (Soft Voting)':33s} test accuracy = {acc:.4f}")
     print(classification_report(y_test, y_pred, target_names=CLASSES))
 
+    # Confusion matrix + heatmap for the ensemble (used on the dashboard)
     cm = confusion_matrix(y_test, y_pred)
     build_confusion_image(cm, CONFUSION_IMG_PATH)
     print(f"   saved  -> {CONFUSION_IMG_PATH}")
+
+    # Global feature importance = average of tree-based importances
+    rf_imp = rf.feature_importances_
+    gb_imp = gb.feature_importances_
+    imp = (rf_imp + gb_imp) / 2.0
+    imp = imp / imp.sum() * 100.0  # normalise to percentages
+    feature_importances = {
+        f: round(float(v), 2) for f, v in zip(FEATURES, imp)
+    }
 
     # Class means in the SCALED feature space (used for feature contributions)
     class_means = np.zeros((len(CLASSES), len(FEATURES)))
@@ -242,14 +400,23 @@ def main() -> None:
     class_counts = df["risk_label"].value_counts().reindex(CLASSES, fill_value=0)
 
     model_bundle = {
-        "model": qda,
+        "model": ensemble,
+        "ensemble": ensemble,
+        "models": models,
+        "model_order": list(models.keys()) + ["Ensemble (Soft Voting)"],
+        "model_accuracies": {
+            k: round(float(v) * 100, 2) for k, v in model_accuracies.items()
+        },
+        "model_reports": model_reports,
+        "confusion_matrices": confusion_matrices,
         "scaler": scaler,
         "features": FEATURES,
         "feature_labels": FEATURE_LABELS,
+        "feature_importances": feature_importances,
         "classes": CLASSES,
         "class_means": class_means,
         "feature_std": np.std(X_train_s, axis=0),
-        "accuracy": float(acc),
+        "accuracy": acc,
         "confusion_matrix": cm.tolist(),
         "dataset_stats": {
             "total_samples": int(len(df)),
@@ -258,14 +425,19 @@ def main() -> None:
             "class_counts": class_counts.to_dict(),
             "class_percent": (class_counts / len(df) * 100).round(2).to_dict(),
             "feature_ranges": {f: list(BOUNDS[f]) for f in FEATURES},
-            "model": "Quadratic Discriminant Analysis",
+            "model": "QDA + Random Forest + Gradient Boosting + Logistic Regression (soft-voting ensemble)",
         },
     }
 
-    joblib.dump(model_bundle, MODEL_PATH)
+    # compress=True shrinks the ensemble pickle dramatically (gzip), keeping the
+    # model count/size small enough for GitHub and Render's free-tier storage.
+    joblib.dump(model_bundle, MODEL_PATH, compress=3)
     print(f">> Model bundle saved -> {MODEL_PATH}")
     print("\nClass distribution:")
     print(class_counts.to_string())
+    print("\nPer-model accuracy comparison:")
+    for name, v in model_accuracies.items():
+        print(f"   {name:33s} {v * 100:.2f}%")
 
 
 if __name__ == "__main__":

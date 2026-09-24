@@ -6,7 +6,7 @@
   <div class="hero-overlay"></div>
   <div class="container position-relative text-center text-white">
     <h1 class="fw-bold">Flight Risk Prediction</h1>
-    <p class="lead mb-0">Enter the flight and weather parameters manually and let QDA assess the risk</p>
+    <p class="lead mb-0">Enter the flight, weather and in-flight parameters manually and let the QDA + ML ensemble assess the risk</p>
   </div>
 </div>
 
@@ -321,6 +321,124 @@
                 <div class="form-text">Night operations carry slightly higher risk.</div>
               </div>
 
+              <!-- ===== Aircraft & In-Flight Dynamics (while moving) ===== -->
+              <div class="col-12 mt-4">
+                <div class="weather-fill-header">
+                  <i class="fa-solid fa-plane-circle-check me-2 text-sky"></i>
+                  <span class="fw-semibold">Aircraft &amp; In-Flight Dynamics (while moving)</span>
+                </div>
+              </div>
+
+              <!-- Ground Speed -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="ground_speed">Ground Speed (km/h)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-location-arrow"></i></span>
+                  <input type="number" step="1" min="200" max="1100" class="form-control" id="ground_speed"
+                         name="ground_speed" placeholder="e.g. 900" value="{{ form_values.ground_speed or '' }}">
+                </div>
+                <div class="form-text">Range: 200 - 1,100 km/h (aircraft speed over the ground)</div>
+              </div>
+
+              <!-- Vertical Speed -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="vertical_speed">Vertical Speed (ft/min)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-arrow-up-down-long"></i></span>
+                  <input type="number" step="50" min="-3000" max="3000" class="form-control" id="vertical_speed"
+                         name="vertical_speed" placeholder="e.g. 500" value="{{ form_values.vertical_speed or '' }}">
+                </div>
+                <div class="form-text">Range: -3,000 (descent) to +3,000 ft/min (climb)</div>
+              </div>
+
+              <!-- Wind Shear -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="wind_shear">Wind Shear (km/h)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wind"></i></span>
+                  <input type="number" step="1" min="0" max="60" class="form-control" id="wind_shear"
+                         name="wind_shear" placeholder="e.g. 25" value="{{ form_values.wind_shear or '' }}">
+                </div>
+                <div class="form-text">Range: 0 - 60 km/h (abrupt wind change along the path)</div>
+              </div>
+
+              <!-- Stall Margin -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="stall_margin">Stall Margin (km/h)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-plug-circle-bolt"></i></span>
+                  <input type="number" step="1" min="0" max="120" class="form-control" id="stall_margin"
+                         name="stall_margin" placeholder="e.g. 45" value="{{ form_values.stall_margin or '' }}">
+                </div>
+                <div class="form-text">Range: 0 - 120 km/h above stall speed (low = dangerous)</div>
+              </div>
+
+              <!-- Vertical Acceleration -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="g_load">Vertical Acceleration (g)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-weight-scale"></i></span>
+                  <input type="number" step="0.05" min="0.5" max="3" class="form-control" id="g_load"
+                         name="g_load" placeholder="e.g. 1.0" value="{{ form_values.g_load or '' }}">
+                </div>
+                <div class="form-text">Range: 0.5 - 3.0 g (normal cruise ≈ 1.0 g)</div>
+              </div>
+
+              <!-- Heading Change -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="heading_change">Heading Change (deg/min)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-location-arrow"></i></span>
+                  <input type="number" step="1" min="0" max="40" class="form-control" id="heading_change"
+                         name="heading_change" placeholder="e.g. 5" value="{{ form_values.heading_change or '' }}">
+                </div>
+                <div class="form-text">Range: 0 - 40 deg/min (abrupt turns increase risk)</div>
+              </div>
+
+              <!-- Ice Accumulation -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="ice_accumulation">Ice Accumulation (0-1)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-snowflake"></i></span>
+                  <input type="number" step="0.01" min="0" max="1" class="form-control" id="ice_accumulation"
+                         name="ice_accumulation" placeholder="e.g. 0.1" value="{{ form_values.ice_accumulation or '' }}">
+                </div>
+                <div class="form-text">Range: 0 (clean) - 1 (severe icing) on the airframe / engines</div>
+              </div>
+
+              <!-- Maintenance Score -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="maintenance_score">Maintenance Score (%)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wrench"></i></span>
+                  <input type="number" step="1" min="40" max="100" class="form-control" id="maintenance_score"
+                         name="maintenance_score" placeholder="e.g. 90" value="{{ form_values.maintenance_score or '' }}">
+                </div>
+                <div class="form-text">Range: 40 - 100% (dispatch / airframe health rating)</div>
+              </div>
+
+              <!-- Pilot Experience -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="pilot_hours">Pilot Experience (log hours)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-user-tie"></i></span>
+                  <input type="number" step="1" min="100" max="20000" class="form-control" id="pilot_hours"
+                         name="pilot_hours" placeholder="e.g. 5000" value="{{ form_values.pilot_hours or '' }}">
+                </div>
+                <div class="form-text">Range: 100 - 20,000 logged flight hours (captain's)</div>
+              </div>
+
+              <!-- Vibration Level -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="vibration_level">Vibration Level (0-10)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-wave-square"></i></span>
+                  <input type="number" step="0.1" min="0" max="10" class="form-control" id="vibration_level"
+                         name="vibration_level" placeholder="e.g. 1.5" value="{{ form_values.vibration_level or '' }}">
+                </div>
+                <div class="form-text">Range: 0 (smooth) - 10 (severe engine/airframe vibration)</div>
+              </div>
+
               <div class="col-12 text-center mt-4">
                 <button type="submit" id="predictBtn" class="btn btn-sky btn-lg fw-semibold px-5">
                   <i class="fa-solid fa-shield-halved me-2"></i>Predict Risk
@@ -352,7 +470,7 @@
       <i class="fa-solid fa-plane-up"></i>
     </div>
     <h5 class="fw-bold mt-3 text-white">Analyzing Flight Risk...</h5>
-    <p class="text-white-50 small mb-0">Running Quadratic Discriminant Analysis</p>
+    <p class="text-white-50 small mb-0">Running QDA + ML ensemble (Random Forest, Gradient Boosting, Logistic Regression)</p>
   </div>
 </div>
 
